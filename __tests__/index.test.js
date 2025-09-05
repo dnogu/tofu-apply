@@ -92,12 +92,12 @@ describe('buildTofuApplyCommand', () => {
     expect(buildTofuApplyCommand(inputs)).toBe('tofu apply saved-plan');
   });
 
-  test('should handle saved plan file with auto-approve', () => {
+  test('should handle saved plan file (auto-approve ignored)', () => {
     const inputs = {
       planFile: 'saved-plan',
-      autoApprove: 'true'
+      autoApprove: 'true'  // This should be ignored in saved plan mode
     };
-    expect(buildTofuApplyCommand(inputs)).toBe('tofu apply saved-plan --auto-approve');
+    expect(buildTofuApplyCommand(inputs)).toBe('tofu apply saved-plan');
   });
 
   test('should add auto-approve in automatic plan mode', () => {
@@ -256,15 +256,16 @@ describe('buildTofuApplyCommand', () => {
   test('should handle saved plan file mode with limited options', () => {
     const inputs = {
       planFile: 'saved-plan',
-      autoApprove: 'true',
-      noColor: 'true',
-      json: 'true',
+      autoApprove: 'true',  // Should be ignored
+      noColor: 'true',      // Should be included
+      json: 'true',         // Should be ignored
+      input: 'false',       // Should be ignored
       // These should be ignored in saved plan mode
       destroy: 'true',
       var: 'env=prod',
       target: 'aws_instance.web'
     };
-    expect(buildTofuApplyCommand(inputs)).toBe('tofu apply saved-plan --auto-approve --json --no-color');
+    expect(buildTofuApplyCommand(inputs)).toBe('tofu apply saved-plan --no-color');
   });
 
   test('should handle refresh-only mode', () => {

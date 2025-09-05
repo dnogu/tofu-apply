@@ -67,7 +67,7 @@ jobs:
 | working-directory   | The directory in which to run tofu apply.                                    | `.`         |
 | chdir               | Switch working directory before executing tofu apply (--chdir).               | `''`        |
 | plan-file           | Path to a saved plan file to apply. If provided, skips planning phase.      | `''`        |
-| auto-approve        | Skip interactive approval of plan before applying (--auto-approve).         | `false`     |
+| auto-approve        | Skip interactive approval of plan before applying (--auto-approve). Only available when not using a saved plan file. | `false`     |
 | destroy             | Create a destroy plan (--destroy). Only available when not using a saved plan file. | `false`     |
 | refresh-only        | Create a refresh-only plan (--refresh-only). Only available when not using a saved plan file. | `false`     |
 | refresh             | Skip the default behavior of syncing state before applying (--refresh=false). Only available when not using a saved plan file. | `true`      |
@@ -81,8 +81,8 @@ jobs:
 | compact-warnings    | Show warning messages in compact form (--compact-warnings).                 | `false`     |
 | consolidate-warnings| Consolidate similar warning messages (--consolidate-warnings).              | `false`     |
 | consolidate-errors  | Consolidate similar error messages (--consolidate-errors).                  | `false`     |
-| input               | Ask for input if necessary (--input=true|false).                            | `false`     |
-| json                | Produce output in JSON format (--json). Requires --auto-approve or saved plan file. | `false`     |
+| input               | Ask for input if necessary (--input=true|false). Only available when not using a saved plan file. | `false`     |
+| json                | Produce output in JSON format (--json). Only available when not using a saved plan file. | `false`     |
 | lock                | Enable or disable state locking (--lock=true|false).                        | `true`      |
 | lock-timeout        | Override the time to wait for a state lock (--lock-timeout=DURATION).       | `0s`        |
 | no-color            | Disable color codes in output (--no-color).                                 | `false`     |
