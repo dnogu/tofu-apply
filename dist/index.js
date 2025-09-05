@@ -32,42 +32,69 @@ function getRepeatableFlag(name, value) {
   return value.split(',').map(v => `--${name}=${v.trim()}`);
 }
 
-function buildTofuPlanCommand(inputs) {
-  let cmdParts = ['tofu', 'plan'];
+function buildTofuApplyCommand(inputs) {
+  let cmdParts = ['tofu', 'apply'];
 
   // Global option
   if (inputs.chdir) {
-    cmdParts = ['tofu', `-chdir=${inputs.chdir}`, 'plan'];
+    cmdParts = ['tofu', `-chdir=${inputs.chdir}`, 'apply'];
   }
 
-  // Planning modes (mutually exclusive)
-  if (inputs.destroy === 'true') cmdParts.push('--destroy');
-  if (inputs.refreshOnly === 'true') cmdParts.push('--refresh-only');
+  // If plan file is provided, use saved plan mode
+  if (inputs.planFile) {
+    cmdParts.push(inputs.planFile);
+    // In saved plan mode, only certain options are allowed
+    if (inputs.autoApprove === 'true') cmdParts.push('--auto-approve');
+    if (inputs.compactWarnings === 'true') cmdParts.push('--compact-warnings');
+    if (inputs.consolidateWarnings === 'true') cmdParts.push('--consolidate-warnings');
+    if (inputs.consolidateErrors === 'true') cmdParts.push('--consolidate-errors');
+    if (inputs.input === 'false') cmdParts.push('--input=false');
+    if (inputs.json === 'true') cmdParts.push('--json');
+    if (inputs.lock === 'false') cmdParts.push('--lock=false');
+    if (inputs.lockTimeout && inputs.lockTimeout !== '0s') cmdParts.push(getFlag('lock-timeout', inputs.lockTimeout, 'string'));
+    if (inputs.noColor === 'true') cmdParts.push('--no-color');
+    if (inputs.concise === 'true') cmdParts.push('--concise');
+    if (inputs.parallelism && inputs.parallelism !== '10') cmdParts.push(getFlag('parallelism', inputs.parallelism, 'string'));
+    if (inputs.state) cmdParts.push(getFlag('state', inputs.state, 'string'));
+    if (inputs.stateOut) cmdParts.push(getFlag('state-out', inputs.stateOut, 'string'));
+    if (inputs.backup) cmdParts.push(getFlag('backup', inputs.backup, 'string'));
+    if (inputs.showSensitive === 'true') cmdParts.push('--show-sensitive');
+    if (inputs.deprecation && inputs.deprecation !== 'module:all') cmdParts.push(getFlag('deprecation', inputs.deprecation, 'string'));
+  } else {
+    // Automatic plan mode - planning options are available
+    
+    // Apply-specific options
+    if (inputs.autoApprove === 'true') cmdParts.push('--auto-approve');
+    if (inputs.compactWarnings === 'true') cmdParts.push('--compact-warnings');
+    if (inputs.consolidateWarnings === 'true') cmdParts.push('--consolidate-warnings');
+    if (inputs.consolidateErrors === 'true') cmdParts.push('--consolidate-errors');
+    if (inputs.input === 'false') cmdParts.push('--input=false');
+    if (inputs.json === 'true') cmdParts.push('--json');
+    if (inputs.lock === 'false') cmdParts.push('--lock=false');
+    if (inputs.lockTimeout && inputs.lockTimeout !== '0s') cmdParts.push(getFlag('lock-timeout', inputs.lockTimeout, 'string'));
+    if (inputs.noColor === 'true') cmdParts.push('--no-color');
+    if (inputs.concise === 'true') cmdParts.push('--concise');
+    if (inputs.parallelism && inputs.parallelism !== '10') cmdParts.push(getFlag('parallelism', inputs.parallelism, 'string'));
+    if (inputs.state) cmdParts.push(getFlag('state', inputs.state, 'string'));
+    if (inputs.stateOut) cmdParts.push(getFlag('state-out', inputs.stateOut, 'string'));
+    if (inputs.backup) cmdParts.push(getFlag('backup', inputs.backup, 'string'));
+    if (inputs.showSensitive === 'true') cmdParts.push('--show-sensitive');
+    if (inputs.deprecation && inputs.deprecation !== 'module:all') cmdParts.push(getFlag('deprecation', inputs.deprecation, 'string'));
 
-  // Planning options
-  if (inputs.refresh === 'false') cmdParts.push('--refresh=false');
-  cmdParts = cmdParts.concat(getRepeatableFlag('replace', inputs.replace));
-  cmdParts = cmdParts.concat(getRepeatableFlag('target', inputs.target));
-  if (inputs.targetFile) cmdParts.push(getFlag('target-file', inputs.targetFile, 'string'));
-  cmdParts = cmdParts.concat(getRepeatableFlag('exclude', inputs.exclude));
-  if (inputs.excludeFile) cmdParts.push(getFlag('exclude-file', inputs.excludeFile, 'string'));
-  cmdParts = cmdParts.concat(getRepeatableFlag('var', inputs.var));
-  cmdParts = cmdParts.concat(getRepeatableFlag('var-file', inputs.varFile));
+    // Planning modes (mutually exclusive)
+    if (inputs.destroy === 'true') cmdParts.push('--destroy');
+    if (inputs.refreshOnly === 'true') cmdParts.push('--refresh-only');
 
-  // Other options
-  if (inputs.compactWarnings === 'true') cmdParts.push('--compact-warnings');
-  if (inputs.detailedExitcode === 'true') cmdParts.push('--detailed-exitcode');
-  if (inputs.generateConfigOut) cmdParts.push(getFlag('generate-config-out', inputs.generateConfigOut, 'string'));
-  if (inputs.input === 'false') cmdParts.push('--input=false');
-  if (inputs.json === 'true') cmdParts.push('--json');
-  if (inputs.lock === 'false') cmdParts.push('--lock=false');
-  if (inputs.lockTimeout && inputs.lockTimeout !== '0s') cmdParts.push(getFlag('lock-timeout', inputs.lockTimeout, 'string'));
-  if (inputs.noColor === 'true') cmdParts.push('--no-color');
-  if (inputs.concise === 'true') cmdParts.push('--concise');
-  if (inputs.out) cmdParts.push(getFlag('out', inputs.out, 'string'));
-  if (inputs.parallelism && inputs.parallelism !== '10') cmdParts.push(getFlag('parallelism', inputs.parallelism, 'string'));
-  if (inputs.state) cmdParts.push(getFlag('state', inputs.state, 'string'));
-  if (inputs.showSensitive === 'true') cmdParts.push('--show-sensitive');
+    // Planning options
+    if (inputs.refresh === 'false') cmdParts.push('--refresh=false');
+    cmdParts = cmdParts.concat(getRepeatableFlag('replace', inputs.replace));
+    cmdParts = cmdParts.concat(getRepeatableFlag('target', inputs.target));
+    if (inputs.targetFile) cmdParts.push(getFlag('target-file', inputs.targetFile, 'string'));
+    cmdParts = cmdParts.concat(getRepeatableFlag('exclude', inputs.exclude));
+    if (inputs.excludeFile) cmdParts.push(getFlag('exclude-file', inputs.excludeFile, 'string'));
+    cmdParts = cmdParts.concat(getRepeatableFlag('var', inputs.var));
+    cmdParts = cmdParts.concat(getRepeatableFlag('var-file', inputs.varFile));
+  }
 
   // Remove empty strings
   cmdParts = cmdParts.filter(Boolean);
@@ -81,6 +108,8 @@ async function run() {
     
     const inputs = {
       chdir: core.getInput('chdir'),
+      planFile: core.getInput('plan-file'),
+      autoApprove: core.getInput('auto-approve'),
       destroy: core.getInput('destroy'),
       refreshOnly: core.getInput('refresh-only'),
       refresh: core.getInput('refresh'),
@@ -91,10 +120,9 @@ async function run() {
       excludeFile: core.getInput('exclude-file'),
       var: core.getInput('var'),
       varFile: core.getInput('var-file'),
-      out: core.getInput('out'),
       compactWarnings: core.getInput('compact-warnings'),
-      detailedExitcode: core.getInput('detailed-exitcode'),
-      generateConfigOut: core.getInput('generate-config-out'),
+      consolidateWarnings: core.getInput('consolidate-warnings'),
+      consolidateErrors: core.getInput('consolidate-errors'),
       input: core.getInput('input'),
       json: core.getInput('json'),
       lock: core.getInput('lock'),
@@ -103,11 +131,14 @@ async function run() {
       concise: core.getInput('concise'),
       parallelism: core.getInput('parallelism'),
       state: core.getInput('state'),
+      stateOut: core.getInput('state-out'),
+      backup: core.getInput('backup'),
       showSensitive: core.getInput('show-sensitive'),
-      displayPlan: core.getInput('display-plan')
+      deprecation: core.getInput('deprecation'),
+      displayOutput: core.getInput('display-output')
     };
 
-    const cmd = buildTofuPlanCommand(inputs);
+    const cmd = buildTofuApplyCommand(inputs);
     core.info(`Running: ${cmd}`);
     
     let output;
@@ -119,30 +150,25 @@ async function run() {
       output = error.stdout || error.message;
       exitCode = error.status || 1;
       
-      // If detailed-exitcode is enabled, exit codes 0, 1, and 2 are expected
-      if (inputs.detailedExitcode === 'true' && (exitCode === 0 || exitCode === 2)) {
-        core.info(`tofu plan completed with exit code ${exitCode}.`);
-      } else if (exitCode !== 0) {
-        // Still show the output even if there's an error
-        if (output && inputs.displayPlan !== 'false') {
-          core.startGroup('📋 OpenTofu Plan Output (with errors)');
-          console.log(output);
-          core.endGroup();
-        }
-        throw error;
+      // Always show the output even if there's an error
+      if (output && inputs.displayOutput !== 'false') {
+        core.startGroup('� OpenTofu Apply Output (with errors)');
+        console.log(output);
+        core.endGroup();
       }
+      throw error;
     }
     
-    // Print the plan output to the console for visibility
-    if (output && inputs.displayPlan !== 'false') {
-      core.startGroup('📋 OpenTofu Plan Output');
+    // Print the apply output to the console for visibility
+    if (output && inputs.displayOutput !== 'false') {
+      core.startGroup('✅ OpenTofu Apply Output');
       console.log(output);
       core.endGroup();
     }
     
-    core.setOutput('plan-output', output);
+    core.setOutput('apply-output', output);
     core.setOutput('exitcode', exitCode);
-    core.info('tofu plan completed successfully.');
+    core.info('tofu apply completed successfully.');
   } catch (error) {
     core.setFailed(error.message);
   }
@@ -152,7 +178,7 @@ async function run() {
 module.exports = {
   getFlag,
   getRepeatableFlag,
-  buildTofuPlanCommand,
+  buildTofuApplyCommand,
   run
 };
 

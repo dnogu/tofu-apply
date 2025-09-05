@@ -1,80 +1,84 @@
-name: 'Tofu Plan'
-description: 'A GitHub Action to run tofu plan with all supported options.'
+name: 'Tofu Apply'
+description: 'A GitHub Action to run tofu apply with all supported options.'
 author: 'dnogu'
 runs:
   using: 'node20'
   main: 'dist/index.js'
 inputs:
   working-directory:
-    description: 'The directory in which to run tofu plan.'
+    description: 'The directory in which to run tofu apply.'
     required: false
     default: '.'
   chdir:
-    description: 'Switch working directory before executing tofu plan (--chdir).'
+    description: 'Switch working directory before executing tofu apply (--chdir).'
     required: false
     default: ''
+  plan-file:
+    description: 'Path to a saved plan file to apply. If provided, skips planning phase.'
+    required: false
+    default: ''
+  auto-approve:
+    description: 'Skip interactive approval of plan before applying (--auto-approve).'
+    required: false
+    default: 'false'
   destroy:
-    description: 'Create a destroy plan (--destroy).'
+    description: 'Create a destroy plan (--destroy). Only available when not using a saved plan file.'
     required: false
     default: 'false'
   refresh-only:
-    description: 'Create a refresh-only plan (--refresh-only).'
+    description: 'Create a refresh-only plan (--refresh-only). Only available when not using a saved plan file.'
     required: false
     default: 'false'
   refresh:
-    description: 'Skip the default behavior of syncing state before planning (--refresh=false).'
+    description: 'Skip the default behavior of syncing state before applying (--refresh=false). Only available when not using a saved plan file.'
     required: false
     default: 'true'
   replace:
-    description: 'Force replacement of particular resource instances (--replace=ADDRESS, comma separated).'
+    description: 'Force replacement of particular resource instances (--replace=ADDRESS, comma separated). Only available when not using a saved plan file.'
     required: false
     default: ''
   target:
-    description: 'Limit planning to only the given resource instances (--target=ADDRESS, comma separated).'
+    description: 'Limit applying to only the given resource instances (--target=ADDRESS, comma separated). Only available when not using a saved plan file.'
     required: false
     default: ''
   target-file:
-    description: 'Limit planning to resource instances listed in file (--target-file=FILE).'
+    description: 'Limit applying to resource instances listed in file (--target-file=FILE). Only available when not using a saved plan file.'
     required: false
     default: ''
   exclude:
-    description: 'Exclude specific resource instances from planning (--exclude=ADDRESS, comma separated).'
+    description: 'Exclude specific resource instances from applying (--exclude=ADDRESS, comma separated). Only available when not using a saved plan file.'
     required: false
     default: ''
   exclude-file:
-    description: 'Exclude resource instances listed in file (--exclude-file=FILE).'
+    description: 'Exclude resource instances listed in file (--exclude-file=FILE). Only available when not using a saved plan file.'
     required: false
     default: ''
   var:
-    description: 'Set input variable(s) (--var NAME=VALUE, comma separated).'
+    description: 'Set input variable(s) (--var NAME=VALUE, comma separated). Only available when not using a saved plan file.'
     required: false
     default: ''
   var-file:
-    description: 'Set input variables from file(s) (--var-file=FILENAME, comma separated).'
-    required: false
-    default: ''
-  out:
-    description: 'Write the plan to the given filename (--out=FILENAME).'
+    description: 'Set input variables from file(s) (--var-file=FILENAME, comma separated). Only available when not using a saved plan file.'
     required: false
     default: ''
   compact-warnings:
     description: 'Show warning messages in compact form (--compact-warnings).'
     required: false
     default: 'false'
-  detailed-exitcode:
-    description: 'Return detailed exit code (--detailed-exitcode).'
+  consolidate-warnings:
+    description: 'Consolidate similar warning messages (--consolidate-warnings).'
     required: false
     default: 'false'
-  generate-config-out:
-    description: 'Generate configuration for import blocks (--generate-config-out=PATH).'
+  consolidate-errors:
+    description: 'Consolidate similar error messages (--consolidate-errors).'
     required: false
-    default: ''
+    default: 'false'
   input:
     description: 'Ask for input if necessary (--input=true|false).'
     required: false
     default: 'false'
   json:
-    description: 'Produce output in JSON format (--json).'
+    description: 'Produce output in JSON format (--json). Requires --auto-approve or saved plan file.'
     required: false
     default: 'false'
   lock:
@@ -101,19 +105,31 @@ inputs:
     description: 'Legacy option for local backend only (--state=STATEFILE).'
     required: false
     default: ''
+  state-out:
+    description: 'Legacy option for local backend only (--state-out=STATEFILE).'
+    required: false
+    default: ''
+  backup:
+    description: 'Legacy option for local backend only (--backup=BACKUPFILE).'
+    required: false
+    default: ''
   show-sensitive:
     description: 'Display sensitive values in output (--show-sensitive).'
     required: false
     default: 'false'
-  display-plan:
-    description: 'Display the plan output in the GitHub Actions log (true/false).'
+  deprecation:
+    description: 'Specify what type of warnings are shown (--deprecation=module:all|module:local|module:none).'
+    required: false
+    default: 'module:all'
+  display-output:
+    description: 'Display the apply output in the GitHub Actions log (true/false).'
     required: false
     default: 'true'
 outputs:
-  plan-output:
-    description: 'The output from tofu plan.'
+  apply-output:
+    description: 'The output from tofu apply.'
   exitcode:
-    description: 'The exit code from tofu plan.'
+    description: 'The exit code from tofu apply.'
 branding:
-  icon: 'eye'
-  color: 'blue'
+  icon: 'check-circle'
+  color: 'green'
