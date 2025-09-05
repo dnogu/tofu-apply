@@ -1,40 +1,49 @@
-const { buildTofuPlanCommand } = require('../index');
+const { buildTofuApplyCommand } = require('../index');
 
-describe('OpenTofu Plan Integration Tests', () => {
+describe('OpenTofu Apply Integration Tests', () => {
   describe('Basic scenarios', () => {
-    test('should generate command for basic local development', () => {
+    test('should generate command for basic local development apply', () => {
       const inputs = {
-        var: 'environment=dev'
+        var: 'environment=dev',
+        autoApprove: 'true'
       };
-      expect(buildTofuPlanCommand(inputs)).toBe('tofu plan --var=environment=dev');
+      expect(buildTofuApplyCommand(inputs)).toBe('tofu apply --auto-approve --var=environment=dev');
     });
 
-    test('should generate command for production planning', () => {
+    test('should generate command for production apply with saved plan', () => {
+      const inputs = {
+        planFile: 'prod-plan'
+      };
+      expect(buildTofuApplyCommand(inputs)).toBe('tofu apply prod-plan');
+    });
+
+    test('should generate command for production apply in automatic plan mode', () => {
       const inputs = {
         varFile: 'prod.tfvars',
         var: 'environment=production',
-        out: 'prod-plan'
+        autoApprove: 'true'
       };
-      expect(buildTofuPlanCommand(inputs)).toBe('tofu plan --var=environment=production --var-file=prod.tfvars --out=prod-plan');
+      expect(buildTofuApplyCommand(inputs)).toBe('tofu apply --auto-approve --var=environment=production --var-file=prod.tfvars');
     });
   });
 
-  describe('Planning mode scenarios', () => {
-    test('should generate command for destroy planning', () => {
+  describe('Apply mode scenarios', () => {
+    test('should generate command for destroy apply', () => {
       const inputs = {
         destroy: 'true',
         var: 'environment=staging',
-        out: 'destroy-plan'
+        autoApprove: 'true'
       };
-      expect(buildTofuPlanCommand(inputs)).toBe('tofu plan --destroy --var=environment=staging --out=destroy-plan');
+      expect(buildTofuApplyCommand(inputs)).toBe('tofu apply --auto-approve --destroy --var=environment=staging');
     });
 
-    test('should generate command for refresh-only planning', () => {
+    test('should generate command for refresh-only apply', () => {
       const inputs = {
         refreshOnly: 'true',
-        noColor: 'true'
+        noColor: 'true',
+        autoApprove: 'true'
       };
-      expect(buildTofuPlanCommand(inputs)).toBe('tofu plan --refresh-only --no-color');
+      expect(buildTofuApplyCommand(inputs)).toBe('tofu apply --auto-approve --no-color --refresh-only');
     });
   });
 
@@ -42,64 +51,76 @@ describe('OpenTofu Plan Integration Tests', () => {
     test('should generate command for resource targeting', () => {
       const inputs = {
         target: 'aws_instance.web,aws_security_group.web',
-        var: 'instance_type=t3.medium'
+        var: 'instance_type=t3.medium',
+        autoApprove: 'true'
       };
-      expect(buildTofuPlanCommand(inputs)).toBe('tofu plan --target=aws_instance.web --target=aws_security_group.web --var=instance_type=t3.medium');
+      expect(buildTofuApplyCommand(inputs)).toBe('tofu apply --auto-approve --target=aws_instance.web --target=aws_security_group.web --var=instance_type=t3.medium');
     });
 
     test('should generate command for resource replacement', () => {
       const inputs = {
         replace: 'aws_instance.database',
-        out: 'replacement-plan'
+        autoApprove: 'true'
       };
-      expect(buildTofuPlanCommand(inputs)).toBe('tofu plan --replace=aws_instance.database --out=replacement-plan');
+      expect(buildTofuApplyCommand(inputs)).toBe('tofu apply --auto-approve --replace=aws_instance.database');
     });
   });
 
-  describe('Variable and output scenarios', () => {
-    test('should generate command for planning with multiple variables', () => {
+  describe('Variable and apply scenarios', () => {
+    test('should generate command for apply with multiple variables', () => {
       const inputs = {
         var: 'random_length=16,random_prefix=test',
-        varFile: 'random.tfvars'
+        varFile: 'random.tfvars',
+        autoApprove: 'true'
       };
-      expect(buildTofuPlanCommand(inputs)).toBe('tofu plan --var=random_length=16 --var=random_prefix=test --var-file=random.tfvars');
+      expect(buildTofuApplyCommand(inputs)).toBe('tofu apply --auto-approve --var=random_length=16 --var=random_prefix=test --var-file=random.tfvars');
     });
 
-    test('should generate command for planning with multiple var files', () => {
+    test('should generate command for apply with multiple var files', () => {
       const inputs = {
         varFile: 'common.tfvars,random.tfvars,secrets.tfvars',
         var: 'seed_value=12345',
-        out: 'multi-var-plan'
+        autoApprove: 'true'
       };
-      expect(buildTofuPlanCommand(inputs)).toBe('tofu plan --var=seed_value=12345 --var-file=common.tfvars --var-file=random.tfvars --var-file=secrets.tfvars --out=multi-var-plan');
+      expect(buildTofuApplyCommand(inputs)).toBe('tofu apply --auto-approve --var=seed_value=12345 --var-file=common.tfvars --var-file=random.tfvars --var-file=secrets.tfvars');
     });
 
-    test('should generate command for planning in subdirectory with JSON output', () => {
+    test('should generate command for apply in subdirectory with JSON output', () => {
       const inputs = {
         chdir: './modules/random',
         json: 'true',
         noColor: 'true',
-        var: 'length=32'
+        var: 'length=32',
+        autoApprove: 'true'
       };
-      expect(buildTofuPlanCommand(inputs)).toBe('tofu -chdir=./modules/random plan --var=length=32 --json --no-color');
+      expect(buildTofuApplyCommand(inputs)).toBe('tofu -chdir=./modules/random apply --auto-approve --json --no-color --var=length=32');
     });
   });
 
-  describe('Advanced planning scenarios', () => {
-    test('should generate command for planning with file-based targeting', () => {
+  describe('Advanced apply scenarios', () => {
+    test('should generate command for apply with file-based targeting', () => {
       const inputs = {
         targetFile: 'targets.txt',
-        var: 'environment=staging'
+        var: 'environment=staging',
+        autoApprove: 'true'
       };
-      expect(buildTofuPlanCommand(inputs)).toBe('tofu plan --target-file=targets.txt --var=environment=staging');
+      expect(buildTofuApplyCommand(inputs)).toBe('tofu apply --auto-approve --target-file=targets.txt --var=environment=staging');
     });
 
     test('should generate command with exclusions', () => {
       const inputs = {
         exclude: 'aws_instance.test,module.test_module',
-        out: 'filtered-plan'
+        autoApprove: 'true'
       };
-      expect(buildTofuPlanCommand(inputs)).toBe('tofu plan --exclude=aws_instance.test --exclude=module.test_module --out=filtered-plan');
+      expect(buildTofuApplyCommand(inputs)).toBe('tofu apply --auto-approve --exclude=aws_instance.test --exclude=module.test_module');
+    });
+
+    test('should generate command for apply with saved plan file', () => {
+      const inputs = {
+        planFile: 'saved-plan',
+        noColor: 'true'
+      };
+      expect(buildTofuApplyCommand(inputs)).toBe('tofu apply saved-plan --no-color');
     });
   });
 
@@ -108,23 +129,33 @@ describe('OpenTofu Plan Integration Tests', () => {
       const inputs = {
         input: 'false',
         noColor: 'true',
-        detailedExitcode: 'true',
         varFile: 'ci.tfvars',
-        out: 'ci-plan'
+        autoApprove: 'true'
       };
-      expect(buildTofuPlanCommand(inputs)).toBe('tofu plan --var-file=ci.tfvars --detailed-exitcode --input=false --no-color --out=ci-plan');
+      expect(buildTofuApplyCommand(inputs)).toBe('tofu apply --auto-approve --input=false --no-color --var-file=ci.tfvars');
     });
 
-    test('should generate command for automated deployment planning', () => {
+    test('should generate command for automated deployment apply', () => {
       const inputs = {
         input: 'false',
         lock: 'false',
         noColor: 'true',
         json: 'true',
         var: 'deployment_id=${Date.now()}',
-        parallelism: '1'
+        parallelism: '1',
+        autoApprove: 'true'
       };
-      expect(buildTofuPlanCommand(inputs)).toBe('tofu plan --var=deployment_id=${Date.now()} --input=false --json --lock=false --no-color --parallelism=1');
+      expect(buildTofuApplyCommand(inputs)).toBe('tofu apply --auto-approve --input=false --json --lock=false --no-color --parallelism=1 --var=deployment_id=${Date.now()}');
+    });
+
+    test('should generate command for apply with saved plan in CI', () => {
+      const inputs = {
+        planFile: 'ci-plan',
+        input: 'false',
+        noColor: 'true',
+        json: 'true'
+      };
+      expect(buildTofuApplyCommand(inputs)).toBe('tofu apply ci-plan --input=false --json --no-color');
     });
   });
 
@@ -136,7 +167,7 @@ describe('OpenTofu Plan Integration Tests', () => {
         target: null,
         chdir: ''
       };
-      expect(buildTofuPlanCommand(inputs)).toBe('tofu plan');
+      expect(buildTofuApplyCommand(inputs)).toBe('tofu apply');
     });
 
     test('should handle mixed valid and invalid inputs', () => {
@@ -145,9 +176,24 @@ describe('OpenTofu Plan Integration Tests', () => {
         var: 'valid=true',
         varFile: '',
         target: 'aws_instance.test',
-        invalidOption: 'should-be-ignored'
+        invalidOption: 'should-be-ignored',
+        autoApprove: 'true'
       };
-      expect(buildTofuPlanCommand(inputs)).toBe('tofu plan --destroy --target=aws_instance.test --var=valid=true');
+      expect(buildTofuApplyCommand(inputs)).toBe('tofu apply --auto-approve --destroy --target=aws_instance.test --var=valid=true');
+    });
+
+    test('should ignore planning options when using saved plan file', () => {
+      const inputs = {
+        planFile: 'saved-plan',
+        // These should be ignored
+        destroy: 'true',
+        var: 'ignored=true',
+        target: 'aws_instance.ignored',
+        // These should be included
+        autoApprove: 'true',
+        noColor: 'true'
+      };
+      expect(buildTofuApplyCommand(inputs)).toBe('tofu apply saved-plan --auto-approve --no-color');
     });
   });
 
@@ -157,29 +203,27 @@ describe('OpenTofu Plan Integration Tests', () => {
         chdir: './environments/staging',
         varFile: 'common.tfvars,staging.tfvars',
         var: 'environment=staging,region=us-east-1,instance_count=2',
-        detailedExitcode: 'true',
         lockTimeout: '300s',
-        out: 'staging-plan'
+        autoApprove: 'true'
       };
       
-      const expected = 'tofu -chdir=./environments/staging plan --var=environment=staging --var=region=us-east-1 --var=instance_count=2 --var-file=common.tfvars --var-file=staging.tfvars --detailed-exitcode --lock-timeout=300s --out=staging-plan';
-      expect(buildTofuPlanCommand(inputs)).toBe(expected);
+      const expected = 'tofu -chdir=./environments/staging apply --auto-approve --lock-timeout=300s --var=environment=staging --var=region=us-east-1 --var=instance_count=2 --var-file=common.tfvars --var-file=staging.tfvars';
+      expect(buildTofuApplyCommand(inputs)).toBe(expected);
     });
 
-    test('should generate command for comprehensive planning scenario', () => {
+    test('should generate command for comprehensive apply scenario', () => {
       const inputs = {
         target: 'aws_instance.web,aws_security_group.web',
         replace: 'aws_instance.database',
         var: 'environment=production,backup_enabled=true',
         varFile: 'prod.tfvars',
-        out: 'comprehensive-plan',
-        detailedExitcode: 'true',
         input: 'false',
-        noColor: 'true'
+        noColor: 'true',
+        autoApprove: 'true'
       };
       
-      const expected = 'tofu plan --replace=aws_instance.database --target=aws_instance.web --target=aws_security_group.web --var=environment=production --var=backup_enabled=true --var-file=prod.tfvars --detailed-exitcode --input=false --no-color --out=comprehensive-plan';
-      expect(buildTofuPlanCommand(inputs)).toBe(expected);
+      const expected = 'tofu apply --auto-approve --input=false --no-color --replace=aws_instance.database --target=aws_instance.web --target=aws_security_group.web --var=environment=production --var=backup_enabled=true --var-file=prod.tfvars';
+      expect(buildTofuApplyCommand(inputs)).toBe(expected);
     });
   });
 });

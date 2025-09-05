@@ -1,4 +1,4 @@
-const { getFlag, getRepeatableFlag, buildTofuPlanCommand } = require('../index');
+const { getFlag, getRepeatableFlag, buildTofuApplyCommand } = require('../index');
 
 // Mock @actions/core to avoid warnings during tests
 jest.mock('@actions/core', () => ({
@@ -72,162 +72,199 @@ describe('getRepeatableFlag', () => {
   });
 });
 
-describe('buildTofuPlanCommand', () => {
-  test('should generate basic tofu plan command with defaults', () => {
+describe('buildTofuApplyCommand', () => {
+  test('should generate basic tofu apply command with defaults', () => {
     const inputs = {};
-    expect(buildTofuPlanCommand(inputs)).toBe('tofu plan');
+    expect(buildTofuApplyCommand(inputs)).toBe('tofu apply');
   });
 
   test('should generate command with chdir option', () => {
     const inputs = {
       chdir: './infrastructure'
     };
-    expect(buildTofuPlanCommand(inputs)).toBe('tofu -chdir=./infrastructure plan');
+    expect(buildTofuApplyCommand(inputs)).toBe('tofu -chdir=./infrastructure apply');
   });
 
-  test('should add destroy planning mode', () => {
+  test('should handle saved plan file mode', () => {
+    const inputs = {
+      planFile: 'saved-plan'
+    };
+    expect(buildTofuApplyCommand(inputs)).toBe('tofu apply saved-plan');
+  });
+
+  test('should handle saved plan file with auto-approve', () => {
+    const inputs = {
+      planFile: 'saved-plan',
+      autoApprove: 'true'
+    };
+    expect(buildTofuApplyCommand(inputs)).toBe('tofu apply saved-plan --auto-approve');
+  });
+
+  test('should add auto-approve in automatic plan mode', () => {
+    const inputs = {
+      autoApprove: 'true'
+    };
+    expect(buildTofuApplyCommand(inputs)).toBe('tofu apply --auto-approve');
+  });
+
+  test('should add destroy planning mode in automatic plan mode', () => {
     const inputs = {
       destroy: 'true'
     };
-    expect(buildTofuPlanCommand(inputs)).toBe('tofu plan --destroy');
+    expect(buildTofuApplyCommand(inputs)).toBe('tofu apply --destroy');
   });
 
-  test('should add refresh-only planning mode', () => {
+  test('should add refresh-only planning mode in automatic plan mode', () => {
     const inputs = {
       refreshOnly: 'true'
     };
-    expect(buildTofuPlanCommand(inputs)).toBe('tofu plan --refresh-only');
+    expect(buildTofuApplyCommand(inputs)).toBe('tofu apply --refresh-only');
   });
 
-  test('should add refresh=false option', () => {
+  test('should add refresh=false option in automatic plan mode', () => {
     const inputs = {
       refresh: 'false'
     };
-    expect(buildTofuPlanCommand(inputs)).toBe('tofu plan --refresh=false');
+    expect(buildTofuApplyCommand(inputs)).toBe('tofu apply --refresh=false');
   });
 
   test('should add input=false option', () => {
     const inputs = {
       input: 'false'
     };
-    expect(buildTofuPlanCommand(inputs)).toBe('tofu plan --input=false');
+    expect(buildTofuApplyCommand(inputs)).toBe('tofu apply --input=false');
   });
 
   test('should add lock=false option', () => {
     const inputs = {
       lock: 'false'
     };
-    expect(buildTofuPlanCommand(inputs)).toBe('tofu plan --lock=false');
+    expect(buildTofuApplyCommand(inputs)).toBe('tofu apply --lock=false');
   });
 
-  test('should add single boolean flags when true', () => {
+  test('should add apply-specific boolean flags when true', () => {
     const inputs = {
       noColor: 'true',
       json: 'true',
       compactWarnings: 'true',
-      detailedExitcode: 'true',
+      consolidateWarnings: 'true',
+      consolidateErrors: 'true',
       concise: 'true',
-      showSensitive: 'true'
+      showSensitive: 'true',
+      autoApprove: 'true'
     };
-    expect(buildTofuPlanCommand(inputs)).toBe('tofu plan --compact-warnings --detailed-exitcode --json --no-color --concise --show-sensitive');
+    expect(buildTofuApplyCommand(inputs)).toBe('tofu apply --auto-approve --compact-warnings --consolidate-warnings --consolidate-errors --json --no-color --concise --show-sensitive');
   });
 
   test('should not add default lock-timeout', () => {
     const inputs = {
       lockTimeout: '0s'
     };
-    expect(buildTofuPlanCommand(inputs)).toBe('tofu plan');
+    expect(buildTofuApplyCommand(inputs)).toBe('tofu apply');
   });
 
   test('should add non-default lock-timeout', () => {
     const inputs = {
       lockTimeout: '30s'
     };
-    expect(buildTofuPlanCommand(inputs)).toBe('tofu plan --lock-timeout=30s');
+    expect(buildTofuApplyCommand(inputs)).toBe('tofu apply --lock-timeout=30s');
   });
 
   test('should add string flags when provided', () => {
     const inputs = {
-      out: 'tfplan',
       targetFile: 'targets.txt',
       excludeFile: 'excludes.txt',
-      generateConfigOut: 'generated.tf',
-      state: 'custom.tfstate'
+      state: 'custom.tfstate',
+      stateOut: 'new-state.tfstate',
+      backup: 'backup.tfstate',
+      deprecation: 'module:local'
     };
-    expect(buildTofuPlanCommand(inputs)).toBe('tofu plan --target-file=targets.txt --exclude-file=excludes.txt --generate-config-out=generated.tf --out=tfplan --state=custom.tfstate');
+    expect(buildTofuApplyCommand(inputs)).toBe('tofu apply --state=custom.tfstate --state-out=new-state.tfstate --backup=backup.tfstate --deprecation=module:local --target-file=targets.txt --exclude-file=excludes.txt');
   });
 
-  test('should add variable flags', () => {
+  test('should add variable flags in automatic plan mode', () => {
     const inputs = {
       var: 'region=us-east-1,instance_type=t2.micro'
     };
-    expect(buildTofuPlanCommand(inputs)).toBe('tofu plan --var=region=us-east-1 --var=instance_type=t2.micro');
+    expect(buildTofuApplyCommand(inputs)).toBe('tofu apply --var=region=us-east-1 --var=instance_type=t2.micro');
   });
 
-  test('should add variable file flags', () => {
+  test('should add variable file flags in automatic plan mode', () => {
     const inputs = {
       varFile: 'prod.tfvars,secrets.tfvars'
     };
-    expect(buildTofuPlanCommand(inputs)).toBe('tofu plan --var-file=prod.tfvars --var-file=secrets.tfvars');
+    expect(buildTofuApplyCommand(inputs)).toBe('tofu apply --var-file=prod.tfvars --var-file=secrets.tfvars');
   });
 
-  test('should add target flags', () => {
+  test('should add target flags in automatic plan mode', () => {
     const inputs = {
       target: 'aws_instance.web,aws_security_group.web'
     };
-    expect(buildTofuPlanCommand(inputs)).toBe('tofu plan --target=aws_instance.web --target=aws_security_group.web');
+    expect(buildTofuApplyCommand(inputs)).toBe('tofu apply --target=aws_instance.web --target=aws_security_group.web');
   });
 
-  test('should add replace flags', () => {
+  test('should add replace flags in automatic plan mode', () => {
     const inputs = {
       replace: 'aws_instance.web,aws_instance.db'
     };
-    expect(buildTofuPlanCommand(inputs)).toBe('tofu plan --replace=aws_instance.web --replace=aws_instance.db');
+    expect(buildTofuApplyCommand(inputs)).toBe('tofu apply --replace=aws_instance.web --replace=aws_instance.db');
   });
 
-  test('should add exclude flags', () => {
+  test('should add exclude flags in automatic plan mode', () => {
     const inputs = {
       exclude: 'aws_instance.test,module.test'
     };
-    expect(buildTofuPlanCommand(inputs)).toBe('tofu plan --exclude=aws_instance.test --exclude=module.test');
+    expect(buildTofuApplyCommand(inputs)).toBe('tofu apply --exclude=aws_instance.test --exclude=module.test');
   });
 
   test('should not add default parallelism', () => {
     const inputs = {
       parallelism: '10'
     };
-    expect(buildTofuPlanCommand(inputs)).toBe('tofu plan');
+    expect(buildTofuApplyCommand(inputs)).toBe('tofu apply');
   });
 
   test('should add non-default parallelism', () => {
     const inputs = {
       parallelism: '5'
     };
-    expect(buildTofuPlanCommand(inputs)).toBe('tofu plan --parallelism=5');
+    expect(buildTofuApplyCommand(inputs)).toBe('tofu apply --parallelism=5');
   });
 
-  test('should generate complex command with multiple options', () => {
+  test('should not add default deprecation setting', () => {
+    const inputs = {
+      deprecation: 'module:all'
+    };
+    expect(buildTofuApplyCommand(inputs)).toBe('tofu apply');
+  });
+
+  test('should generate complex command with multiple options in automatic plan mode', () => {
     const inputs = {
       chdir: './infra',
       destroy: 'true',
       var: 'env=prod,region=us-west-2',
       varFile: 'common.tfvars,prod.tfvars',
       target: 'aws_instance.web',
-      out: 'destroy-plan',
       noColor: 'true',
-      detailedExitcode: 'true'
+      autoApprove: 'true'
     };
     
-    const expected = 'tofu -chdir=./infra plan --destroy --target=aws_instance.web --var=env=prod --var=region=us-west-2 --var-file=common.tfvars --var-file=prod.tfvars --detailed-exitcode --no-color --out=destroy-plan';
-    expect(buildTofuPlanCommand(inputs)).toBe(expected);
+    const expected = 'tofu -chdir=./infra apply --auto-approve --no-color --destroy --target=aws_instance.web --var=env=prod --var=region=us-west-2 --var-file=common.tfvars --var-file=prod.tfvars';
+    expect(buildTofuApplyCommand(inputs)).toBe(expected);
   });
 
-  test('should handle planning with detailed exit codes', () => {
+  test('should handle saved plan file mode with limited options', () => {
     const inputs = {
-      detailedExitcode: 'true',
-      out: 'plan-file'
+      planFile: 'saved-plan',
+      autoApprove: 'true',
+      noColor: 'true',
+      json: 'true',
+      // These should be ignored in saved plan mode
+      destroy: 'true',
+      var: 'env=prod',
+      target: 'aws_instance.web'
     };
-    expect(buildTofuPlanCommand(inputs)).toBe('tofu plan --detailed-exitcode --out=plan-file');
+    expect(buildTofuApplyCommand(inputs)).toBe('tofu apply saved-plan --auto-approve --json --no-color');
   });
 
   test('should handle refresh-only mode', () => {
@@ -235,7 +272,7 @@ describe('buildTofuPlanCommand', () => {
       refreshOnly: 'true',
       noColor: 'true'
     };
-    expect(buildTofuPlanCommand(inputs)).toBe('tofu plan --refresh-only --no-color');
+    expect(buildTofuApplyCommand(inputs)).toBe('tofu apply --no-color --refresh-only');
   });
 
   test('should handle all configuration options for a comprehensive scenario', () => {
@@ -244,14 +281,13 @@ describe('buildTofuPlanCommand', () => {
       var: 'environment=staging,region=us-east-1',
       varFile: 'staging.tfvars',
       target: 'aws_instance.web',
-      out: 'staging-plan',
       json: 'true',
       noColor: 'true',
-      detailedExitcode: 'true',
+      autoApprove: 'true',
       parallelism: '5'
     };
     
-    const expected = 'tofu -chdir=./infra plan --target=aws_instance.web --var=environment=staging --var=region=us-east-1 --var-file=staging.tfvars --detailed-exitcode --json --no-color --out=staging-plan --parallelism=5';
-    expect(buildTofuPlanCommand(inputs)).toBe(expected);
+    const expected = 'tofu -chdir=./infra apply --auto-approve --json --no-color --parallelism=5 --target=aws_instance.web --var=environment=staging --var=region=us-east-1 --var-file=staging.tfvars';
+    expect(buildTofuApplyCommand(inputs)).toBe(expected);
   });
 });
