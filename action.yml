@@ -1,0 +1,119 @@
+name: 'Tofu Plan'
+description: 'A GitHub Action to run tofu plan with all supported options.'
+author: 'dnogu'
+runs:
+  using: 'node20'
+  main: 'dist/index.js'
+inputs:
+  working-directory:
+    description: 'The directory in which to run tofu plan.'
+    required: false
+    default: '.'
+  chdir:
+    description: 'Switch working directory before executing tofu plan (--chdir).'
+    required: false
+    default: ''
+  destroy:
+    description: 'Create a destroy plan (--destroy).'
+    required: false
+    default: 'false'
+  refresh-only:
+    description: 'Create a refresh-only plan (--refresh-only).'
+    required: false
+    default: 'false'
+  refresh:
+    description: 'Skip the default behavior of syncing state before planning (--refresh=false).'
+    required: false
+    default: 'true'
+  replace:
+    description: 'Force replacement of particular resource instances (--replace=ADDRESS, comma separated).'
+    required: false
+    default: ''
+  target:
+    description: 'Limit planning to only the given resource instances (--target=ADDRESS, comma separated).'
+    required: false
+    default: ''
+  target-file:
+    description: 'Limit planning to resource instances listed in file (--target-file=FILE).'
+    required: false
+    default: ''
+  exclude:
+    description: 'Exclude specific resource instances from planning (--exclude=ADDRESS, comma separated).'
+    required: false
+    default: ''
+  exclude-file:
+    description: 'Exclude resource instances listed in file (--exclude-file=FILE).'
+    required: false
+    default: ''
+  var:
+    description: 'Set input variable(s) (--var NAME=VALUE, comma separated).'
+    required: false
+    default: ''
+  var-file:
+    description: 'Set input variables from file(s) (--var-file=FILENAME, comma separated).'
+    required: false
+    default: ''
+  out:
+    description: 'Write the plan to the given filename (--out=FILENAME).'
+    required: false
+    default: ''
+  compact-warnings:
+    description: 'Show warning messages in compact form (--compact-warnings).'
+    required: false
+    default: 'false'
+  detailed-exitcode:
+    description: 'Return detailed exit code (--detailed-exitcode).'
+    required: false
+    default: 'false'
+  generate-config-out:
+    description: 'Generate configuration for import blocks (--generate-config-out=PATH).'
+    required: false
+    default: ''
+  input:
+    description: 'Ask for input if necessary (--input=true|false).'
+    required: false
+    default: 'false'
+  json:
+    description: 'Produce output in JSON format (--json).'
+    required: false
+    default: 'false'
+  lock:
+    description: 'Enable or disable state locking (--lock=true|false).'
+    required: false
+    default: 'true'
+  lock-timeout:
+    description: 'Override the time to wait for a state lock (--lock-timeout=DURATION).'
+    required: false
+    default: '0s'
+  no-color:
+    description: 'Disable color codes in output (--no-color).'
+    required: false
+    default: 'false'
+  concise:
+    description: 'Disable progress-related messages (--concise).'
+    required: false
+    default: 'false'
+  parallelism:
+    description: 'Limit the number of concurrent operations (--parallelism=n).'
+    required: false
+    default: '10'
+  state:
+    description: 'Legacy option for local backend only (--state=STATEFILE).'
+    required: false
+    default: ''
+  show-sensitive:
+    description: 'Display sensitive values in output (--show-sensitive).'
+    required: false
+    default: 'false'
+  display-plan:
+    description: 'Display the plan output in the GitHub Actions log (true/false).'
+    required: false
+    default: 'true'
+outputs:
+  plan-output:
+    description: 'The output from tofu plan.'
+  exitcode:
+    description: 'The exit code from tofu plan.'
+branding:
+  icon: 'eye'
+  color: 'blue'
