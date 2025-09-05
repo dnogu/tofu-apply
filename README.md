@@ -291,4 +291,4 @@ MIT
 
 ---
 
-*This action applies OpenTofu configurations. For planning only, use the `tofu-plan` action.*
+*This action applies OpenTofu configurations. For planning, use the `tofu-plan` action.*
