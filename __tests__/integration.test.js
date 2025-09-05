@@ -151,11 +151,11 @@ describe('OpenTofu Apply Integration Tests', () => {
     test('should generate command for apply with saved plan in CI', () => {
       const inputs = {
         planFile: 'ci-plan',
-        input: 'false',
-        noColor: 'true',
-        json: 'true'
+        input: 'false',    // Should be ignored (not allowed with saved plans)
+        noColor: 'true',   // Should be included
+        json: 'true'       // Should be ignored (not allowed with saved plans)
       };
-      expect(buildTofuApplyCommand(inputs)).toBe('tofu apply ci-plan --input=false --json --no-color');
+      expect(buildTofuApplyCommand(inputs)).toBe('tofu apply ci-plan --no-color');
     });
   });
 
@@ -189,11 +189,12 @@ describe('OpenTofu Apply Integration Tests', () => {
         destroy: 'true',
         var: 'ignored=true',
         target: 'aws_instance.ignored',
+        autoApprove: 'true',  // Should be ignored (not allowed with saved plans)
+        input: 'false',       // Should be ignored (not allowed with saved plans)
         // These should be included
-        autoApprove: 'true',
         noColor: 'true'
       };
-      expect(buildTofuApplyCommand(inputs)).toBe('tofu apply saved-plan --auto-approve --no-color');
+      expect(buildTofuApplyCommand(inputs)).toBe('tofu apply saved-plan --no-color');
     });
   });
 

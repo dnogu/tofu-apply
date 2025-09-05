@@ -43,21 +43,16 @@ function buildTofuApplyCommand(inputs) {
   // If plan file is provided, use saved plan mode
   if (inputs.planFile) {
     cmdParts.push(inputs.planFile);
-    // In saved plan mode, only certain options are allowed
-    if (inputs.autoApprove === 'true') cmdParts.push('--auto-approve');
+    // In saved plan mode, only very limited options are allowed according to OpenTofu docs
+    // The plan file contains all the planning decisions, so most options are ignored
     if (inputs.compactWarnings === 'true') cmdParts.push('--compact-warnings');
     if (inputs.consolidateWarnings === 'true') cmdParts.push('--consolidate-warnings');
     if (inputs.consolidateErrors === 'true') cmdParts.push('--consolidate-errors');
-    if (inputs.input === 'false') cmdParts.push('--input=false');
-    if (inputs.json === 'true') cmdParts.push('--json');
     if (inputs.lock === 'false') cmdParts.push('--lock=false');
     if (inputs.lockTimeout && inputs.lockTimeout !== '0s') cmdParts.push(getFlag('lock-timeout', inputs.lockTimeout, 'string'));
     if (inputs.noColor === 'true') cmdParts.push('--no-color');
     if (inputs.concise === 'true') cmdParts.push('--concise');
     if (inputs.parallelism && inputs.parallelism !== '10') cmdParts.push(getFlag('parallelism', inputs.parallelism, 'string'));
-    if (inputs.state) cmdParts.push(getFlag('state', inputs.state, 'string'));
-    if (inputs.stateOut) cmdParts.push(getFlag('state-out', inputs.stateOut, 'string'));
-    if (inputs.backup) cmdParts.push(getFlag('backup', inputs.backup, 'string'));
     if (inputs.showSensitive === 'true') cmdParts.push('--show-sensitive');
     if (inputs.deprecation && inputs.deprecation !== 'module:all') cmdParts.push(getFlag('deprecation', inputs.deprecation, 'string'));
   } else {
