@@ -122,14 +122,14 @@ inputs:
     required: false
     default: 'module:all'
   display-output:
-    description: 'Display the apply output in the GitHub Actions log (true/false).'
+    description: 'Stream stdout and stderr to the GitHub Actions log (true/false). Full output is saved to a file regardless.'
     required: false
     default: 'true'
 outputs:
-  apply-output:
-    description: 'The output from tofu apply.'
+  log-path:
+    description: 'Absolute path to the full combined stdout and stderr log file. Available after failed applies when log setup succeeds.'
   exitcode:
-    description: 'The exit code from tofu apply.'
+    description: 'The exit code from tofu apply, or 1 if it cannot start or exits due to a signal.'
 branding:
   icon: 'check-circle'
   color: 'green'
