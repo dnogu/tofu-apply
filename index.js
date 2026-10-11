@@ -1,5 +1,9 @@
 const core = require('@actions/core');
-const { execSync } = require('child_process');
+const { spawn } = require('child_process');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+const { finished } = require('stream/promises');
 
 function getFlag(name, value, type = 'boolean') {
   if (type === 'boolean') {
@@ -26,12 +30,12 @@ function getRepeatableFlag(name, value) {
   return value.split(',').map(v => `--${name}=${v.trim()}`);
 }
 
-function buildTofuApplyCommand(inputs) {
-  let cmdParts = ['tofu', 'apply'];
+function buildTofuApplyArgs(inputs) {
+  let cmdParts = ['apply'];
 
   // Global option
   if (inputs.chdir) {
-    cmdParts = ['tofu', `-chdir=${inputs.chdir}`, 'apply'];
+    cmdParts = [`-chdir=${inputs.chdir}`, 'apply'];
   }
 
   // If plan file is provided, use saved plan mode
@@ -88,10 +92,68 @@ function buildTofuApplyCommand(inputs) {
   // Remove empty strings
   cmdParts = cmdParts.filter(Boolean);
 
-  return cmdParts.join(' ');
+  return cmdParts;
+}
+
+function buildTofuApplyCommand(inputs) {
+  return ['tofu', ...buildTofuApplyArgs(inputs)].join(' ');
+}
+
+async function executeTofuApply(args, workingDir, logPath, displayOutput) {
+  const logStream = fs.createWriteStream(logPath, { flags: 'a' });
+  // Observe file errors immediately, including while the child is still running.
+  const logFinished = finished(logStream).then(() => null, error => error);
+  let child;
+  let processError;
+  let terminationTimer;
+
+  logStream.on('error', () => {
+    if (child && child.exitCode === null && child.signalCode === null) {
+      child.kill();
+      // Allow graceful shutdown, but do not hang if it ignores SIGTERM after an
+      // unrecoverable logging failure has stopped consuming its output.
+      terminationTimer = setTimeout(() => child.kill('SIGKILL'), 5000);
+      terminationTimer.unref();
+    }
+  });
+
+  try {
+    const result = await new Promise(resolve => {
+      child = spawn('tofu', args, {
+        cwd: workingDir,
+        stdio: ['ignore', 'pipe', 'pipe']
+      });
+      child.once('error', error => {
+        processError = error;
+      });
+      child.once('close', (code, signal) => {
+        clearTimeout(terminationTimer);
+        resolve({ code, signal });
+      });
+
+      // pipe() applies backpressure, keeping memory bounded even with large logs.
+      child.stdout.pipe(logStream, { end: false });
+      child.stderr.pipe(logStream, { end: false });
+      if (displayOutput) {
+        child.stdout.pipe(process.stdout, { end: false });
+        child.stderr.pipe(process.stderr, { end: false });
+      }
+    });
+
+    if (processError) throw processError;
+    return result;
+  } finally {
+    clearTimeout(terminationTimer);
+    // The close event follows closure of both child streams. Flush the file before
+    // run() finishes so a subsequent upload step can read the complete log.
+    logStream.end();
+    const logError = await logFinished;
+    if (logError) throw logError;
+  }
 }
 
 async function run() {
+  let exitCode = 1;
   try {
     const workingDir = core.getInput('working-directory') || process.cwd();
     
@@ -127,39 +189,28 @@ async function run() {
       displayOutput: core.getInput('display-output')
     };
 
-    const cmd = buildTofuApplyCommand(inputs);
-    core.info(`Running: ${cmd}`);
-    
-    let output;
-    let exitCode = 0;
-    
-    try {
-      output = execSync(cmd, { cwd: workingDir, encoding: 'utf-8' });
-    } catch (error) {
-      output = error.stdout || error.message;
-      exitCode = error.status || 1;
-      
-      // Always show the output even if there's an error
-      if (output && inputs.displayOutput !== 'false') {
-        core.startGroup('� OpenTofu Apply Output (with errors)');
-        console.log(output);
-        core.endGroup();
-      }
-      throw error;
+    const args = buildTofuApplyArgs(inputs);
+    core.info(`Running: ${buildTofuApplyCommand(inputs)}`);
+
+    const tempDir = path.resolve(process.env.RUNNER_TEMP || os.tmpdir());
+    const logDir = await fs.promises.mkdtemp(path.join(tempDir, 'tofu-apply-'));
+    const logPath = path.join(logDir, 'apply.log');
+    await fs.promises.writeFile(logPath, '', { mode: 0o600 });
+    core.setOutput('log-path', logPath);
+
+    const result = await executeTofuApply(args, workingDir, logPath, inputs.displayOutput !== 'false');
+    exitCode = result.code === null ? 1 : result.code;
+    if (result.signal) {
+      throw new Error(`tofu apply terminated by signal ${result.signal}. See ${logPath} for details.`);
     }
-    
-    // Print the apply output to the console for visibility
-    if (output && inputs.displayOutput !== 'false') {
-      core.startGroup('✅ OpenTofu Apply Output');
-      console.log(output);
-      core.endGroup();
+    if (exitCode !== 0) {
+      throw new Error(`tofu apply failed with exit code ${exitCode}. See ${logPath} for details.`);
     }
-    
-    core.setOutput('apply-output', output);
-    core.setOutput('exitcode', exitCode);
     core.info('tofu apply completed successfully.');
   } catch (error) {
     core.setFailed(error.message);
+  } finally {
+    core.setOutput('exitcode', exitCode);
   }
 }
 
@@ -167,6 +218,7 @@ async function run() {
 module.exports = {
   getFlag,
   getRepeatableFlag,
+  buildTofuApplyArgs,
   buildTofuApplyCommand,
   run
 };
